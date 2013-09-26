@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+	<Description about="urn:mozilla:install-manifest">
+		<em:id>{86054B0A-BD85-42F9-8E58-8794EC6F6EA1}</em:id>
+		<em:type>2</em:type>
+		<em:name>GitHub Extension Installer</em:name>
+		<em:version>1.0</em:version>
+		<em:creator>Diego Casorran &lt;dcasorran@gmail.com&gt;</em:creator>
+		<em:description>Install Browser Extensions straight from GitHub Repositories</em:description>
+		<em:bootstrap>true</em:bootstrap>
+		<em:targetApplication>
+			<Description>
+				<!-- Firefox -->
+				<em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+				<em:minVersion>7.0</em:minVersion>
+				<em:maxVersion>26.*</em:maxVersion>
+			</Description>
+		</em:targetApplication>
+		<em:targetApplication>
+			<Description>
+				<!-- SeaMonkey -->
+				<em:id>{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}</em:id>
+				<em:minVersion>2.3</em:minVersion>
+				<em:maxVersion>2.24</em:maxVersion>
+			</Description>
+		</em:targetApplication>
+		<em:targetApplication>
+			<Description>
+				<!-- Fennec -->
+				<em:id>{a23983c0-fd0e-11dc-95ff-0800200c9a66}</em:id>
+				<em:minVersion>10.0a1</em:minVersion>
+				<em:maxVersion>24.0</em:maxVersion>
+			</Description>
+		</em:targetApplication>
+		<em:targetApplication>
+			<Description>
+				<!-- Android -->
+				<em:id>{aa3c5121-dab2-40e2-81ca-7ea25febc110}</em:id>
+				<em:minVersion>10.0a1</em:minVersion>
+				<em:maxVersion>26.*</em:maxVersion>
+			</Description>
+		</em:targetApplication>
+	</Description>
+</RDF>
