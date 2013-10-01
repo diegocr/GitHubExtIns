@@ -32,12 +32,15 @@ let i$ = {
 			.QueryInterface(Ci.nsIInterfaceRequestor)
 			.getInterface(Ci.nsIDOMWindow));
 	},
+	wmf: function(callback) {
+		let w = Services.wm.getEnumerator('navigator:browser');
+		while(w.hasMoreElements())
+			callback(w.getNext()
+				.QueryInterface(Ci.nsIDOMWindow));
+	},
 	onCloseWindow: function() {},
 	onWindowTitleChange: function() {}
 };
-
-let zipReader = Cc["@mozilla.org/libjar/zip-reader;1"].createInstance(Ci.nsIZipReader),
-	zipWriter = Cc["@mozilla.org/zipwriter;1"].createInstance(Ci.nsIZipWriter);
 
 function onClickHanlder(ev) {
 	ev.preventDefault();
@@ -65,6 +68,10 @@ function onClickHanlder(ev) {
 				Services.prompt.alert(null,addon.name,
 					'Error ' +aStatus+ ' writing to ' +nFile.path);
 			} else {
+				let zipReader = Cc["@mozilla.org/libjar/zip-reader;1"]
+						.createInstance(Ci.nsIZipReader),
+					zipWriter = Cc["@mozilla.org/zipwriter;1"]
+							.createInstance(Ci.nsIZipWriter);
 				
 				let oFile = FileUtils.getFile("TmpD", [addon.tag+'.xpi']);
 				zipReader.open(nFile);
@@ -103,16 +110,16 @@ function onClickHanlder(ev) {
 					};
 					
 					aInstall.addListener({
-						onInstallFailed : aInstall => {
+						onInstallFailed : function(aInstall) {
 							aInstall.removeListener(this);
 							
 							done(aInstall.error);
 						},
-						onInstallEnded : (aInstall,aAddon) => {
+						onInstallEnded : function(aInstall,aAddon) {
 							aInstall.removeListener(this);
 							
 							done(aAddon.name + ' ' + aAddon.version
-								+ ' installed successfully.');
+								+ ' has been installed successfully.');
 						}
 					});
 					aInstall.install();
@@ -225,8 +232,6 @@ function unloadFromWindow(window) {
 
 function startup(data) {
 	AddonManager.getAddonByID(data.id,data=> {
-		let io = Services.io, wm = Services.wm;
-		
 		addon = {
 			id: data.id,
 			name: data.name,
@@ -236,17 +241,8 @@ function startup(data) {
 		};
 		addon.branch = Services.prefs.getBranch('extensions.'+addon.tag+'.');
 		
-		io.getProtocolHandler("resource")
-			.QueryInterface(Ci.nsIResProtocolHandler)
-			.setSubstitution(addon.tag,
-				io.newURI(__SCRIPT_URI_SPEC__+'/../',null,null));
-		
-		let windows = wm.getEnumerator("navigator:browser");
-		while(windows.hasMoreElements()) {
-			let diegocr = windows.getNext().QueryInterface(Ci.nsIDOMWindow);
-			loadIntoWindowStub(diegocr);
-		}
-		wm.addListener(i$);
+		i$.wmf(loadIntoWindowStub);
+		Services.wm.addListener(i$);
 		
 		addon.branch.setCharPref('version', addon.version);
 	});
@@ -257,16 +253,7 @@ function shutdown(data, reason) {
 		return;
 	
 	Services.wm.removeListener(i$);
-	
-	let windows = Services.wm.getEnumerator("navigator:browser");
-	while(windows.hasMoreElements()) {
-		let domWindow = windows.getNext().QueryInterface(Ci.nsIDOMWindow);
-		unloadFromWindow(domWindow);
-	}
-	
-	Services.io.getProtocolHandler("resource")
-		.QueryInterface(Ci.nsIResProtocolHandler)
-		.setSubstitution(addon.tag,null);
+	i$.wmf(unloadFromWindow);
 }
 
 function install(data, reason) {}
