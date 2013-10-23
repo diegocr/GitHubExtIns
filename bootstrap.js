@@ -147,8 +147,9 @@ function loadIntoWindow(window) {
 				(n) => 'install.rdf' === n.textContent.trim())) {
 					
 				let n = doc.querySelector('a.minibutton:nth-child(6)');
+				if(!n)n=doc.querySelector('a.minibutton:nth-child(5)');
 				
-				if(n.textContent.trim() === 'Download ZIP') {
+				if(n && n.textContent.trim() === 'Download ZIP') {
 					
 					let p = n.parentNode;
 					n = n.cloneNode(!0);
