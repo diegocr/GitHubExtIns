@@ -146,8 +146,8 @@ function loadIntoWindow(window) {
 			'table.files > tbody > tr > td.content'),
 				(n) => 'install.rdf' === n.textContent.trim())) {
 					
-				let n = doc.querySelector('a.minibutton:nth-child(6)');
-				if(!n)n=doc.querySelector('a.minibutton:nth-child(5)');
+				let c = 7;
+				while(c-- && !(n=doc.querySelector('a.minibutton:nth-child('+c+')')));
 				
 				if(n && n.textContent.trim() === 'Download ZIP') {
 					
