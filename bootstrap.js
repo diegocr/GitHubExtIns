@@ -131,6 +131,27 @@ function onClickHanlder(ev) {
 	});
 }
 
+function onPageLoad(doc) {
+	if([].some.call(doc.querySelectorAll('table.files > tbody > tr > td.content'),
+		(n) => 'install.rdf' === n.textContent.trim())) {
+		
+		let c = 7, n;
+		while(c-- && !(n=doc.querySelector('a.minibutton:nth-child('+c+')')));
+		
+		if(n && n.textContent.trim() === 'Download ZIP') {
+			
+			let p = n.parentNode;
+			n = n.cloneNode(!0);
+			
+			n.title = 'Install Extension';
+			n.textContent = '\u002B Add to ' + Services.appinfo.name;
+			p.appendChild(n);
+			
+			n.addEventListener('click', onClickHanlder, false);
+		}
+	}
+}
+
 function loadIntoWindow(window) {
 	if(window.document.documentElement
 		.getAttribute("windowtype") != 'navigator:browser')
@@ -142,25 +163,23 @@ function loadIntoWindow(window) {
 		if(!(doc.location && doc.location.host == 'github.com'))
 			return;
 		
-		if([].some.call(doc.querySelectorAll(
-			'table.files > tbody > tr > td.content'),
-				(n) => 'install.rdf' === n.textContent.trim())) {
-					
-				let c = 7;
-				while(c-- && !(n=doc.querySelector('a.minibutton:nth-child('+c+')')));
-				
-				if(n && n.textContent.trim() === 'Download ZIP') {
-					
-					let p = n.parentNode;
-					n = n.cloneNode(!0);
-					
-					n.title = 'Install Extension';
-					n.textContent = '\u002B Add to ' + Services.appinfo.name;
-					p.appendChild(n);
-					
-					n.addEventListener('click', onClickHanlder, false);
+		let e = doc.getElementsByClassName('page-context-loader')[0];
+		if(e) {
+			new doc.defaultView.MutationObserver(function(ms) {
+				for(let m of ms) {
+					if('class' == m.attributeName) {
+						if(~m.oldValue.indexOf('loading')) {
+							onPageLoad(doc);
+						}
+						break;
+					}
 				}
-			}
+			}).observe(e,{attributes:!0,attributeOldValue:!0});
+			
+			e = undefined;
+		}
+		
+		onPageLoad(doc);
 	};
 	getBrowser(window).addEventListener('DOMContentLoaded', domload, false);
 	addon.wms.set(window,domload);
