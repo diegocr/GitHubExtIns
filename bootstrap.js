@@ -132,6 +132,8 @@ function onClickHanlder(ev) {
 }
 
 function onPageLoad(doc) {
+	if(doc.getElementById(addon.tag)) return;
+	
 	if([].some.call(doc.querySelectorAll('table.files > tbody > tr > td.content'),
 		(n) => 'install.rdf' === n.textContent.trim())) {
 		
@@ -143,6 +145,7 @@ function onPageLoad(doc) {
 			let p = n.parentNode;
 			n = n.cloneNode(!0);
 			
+			n.id = addon.tag;
 			n.title = 'Install Extension';
 			n.textContent = '\u002B Add to ' + Services.appinfo.name;
 			p.appendChild(n);
@@ -157,27 +160,32 @@ function loadIntoWindow(window) {
 		.getAttribute("windowtype") != 'navigator:browser')
 			return;
 	
+	function onMutation(ms,doc) {
+		for(let m of ms) {
+			if('class' == m.attributeName) {
+				if(~m.oldValue.indexOf('loading')
+				|| m.oldValue === 'context-loader') {
+					window.setTimeout(onPageLoad.bind(null,doc),620);
+				}
+				break;
+			}
+		}
+	}
+	
 	let domload = ev => {
 		let doc = ev.originalTarget;
 		
 		if(!(doc.location && doc.location.host == 'github.com'))
 			return;
 		
-		let e = doc.getElementsByClassName('page-context-loader')[0];
-		if(e) {
-			new doc.defaultView.MutationObserver(function(ms) {
-				for(let m of ms) {
-					if('class' == m.attributeName) {
-						if(~m.oldValue.indexOf('loading')) {
-							onPageLoad(doc);
-						}
-						break;
-					}
-				}
-			}).observe(e,{attributes:!0,attributeOldValue:!0});
+		['page-context-loader','context-loader'].forEach(e => {
 			
-			e = undefined;
-		}
+			e = doc.getElementsByClassName(e);
+			for(let o of e) {
+				new doc.defaultView.MutationObserver(m => onMutation(m,doc))
+					.observe(o,{attributes:!0,attributeOldValue:!0});
+			}
+		});
 		
 		onPageLoad(doc);
 	};
