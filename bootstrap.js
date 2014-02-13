@@ -54,7 +54,7 @@ function onClickHanlder(ev) {
 	this.style.setProperty('background','url('+iBG+') repeat','important');
 	this.setAttribute(addon.tag,1);
 	
-	xhr(this.href,data => {
+	xhr(this.href || this.getAttribute(addon.tag),data => {
 		let iStream = Cc["@mozilla.org/io/arraybuffer-input-stream;1"]
 			.createInstance(Ci.nsIArrayBufferInputStream);
 		
@@ -131,6 +131,23 @@ function onClickHanlder(ev) {
 	});
 }
 
+function addButton(n,u) {
+	let p = n.parentNode;
+	n = n.cloneNode(!0);
+	
+	n.id = addon.tag;
+	n.title = 'Install Extension';
+	n.textContent = '\u002B Add to ' + Services.appinfo.name;
+	p.appendChild(n);
+	
+	n.addEventListener('click', onClickHanlder, false);
+	
+	if(u) {
+		n.setAttribute(addon.tag,u);
+		n.style.cursor = 'pointer';
+	}
+}
+
 function onPageLoad(doc) {
 	if(doc.getElementById(addon.tag)) return;
 	
@@ -142,15 +159,26 @@ function onPageLoad(doc) {
 		
 		if(n && n.textContent.trim() === 'Download ZIP') {
 			
-			let p = n.parentNode;
-			n = n.cloneNode(!0);
+			addButton(n);
+		}
+	}
+	
+	if(doc.location.pathname.replace(/\/[^/]+$/,'').substr(-4) === 'pull') {
+		// Based on work by Jerone: https://github.com/jerone/UserScripts
+		
+		let r = doc.location.pathname.split('/').filter(String).shift();
+		if(~(addon.branch.getPrefType('prs') && addon.branch.getCharPref('prs') || '').split(',').indexOf(r)) {
 			
-			n.id = addon.tag;
-			n.title = 'Install Extension';
-			n.textContent = '\u002B Add to ' + Services.appinfo.name;
-			p.appendChild(n);
+			let n = doc.querySelectorAll('span.commit-ref.current-branch.css-truncate.js-selectable-text.expandable')[1],
+				b = n.textContent.trim().split(':'),
+				t = b.shift(),
+				u = [
+					'https://github.com', t,
+					doc.querySelector('.js-current-repository').textContent,
+					'archive', b.join(':') + '.zip'
+				].join('/');
 			
-			n.addEventListener('click', onClickHanlder, false);
+			addButton(n,u);
 		}
 	}
 }
