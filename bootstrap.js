@@ -137,7 +137,7 @@ function addButton(n,u) {
 	
 	n.id = addon.tag;
 	n.title = 'Install Extension';
-	n.textContent = '\u002B Add to ' + Services.appinfo.name;
+	n.innerHTML = '<span class="octicon octicon-plus"></span>Add to ' + Services.appinfo.name;
 	p.appendChild(n);
 	
 	n.addEventListener('click', onClickHanlder, false);
