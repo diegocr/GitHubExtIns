@@ -131,13 +131,16 @@ function onClickHanlder(ev) {
 	});
 }
 
-function addButton(n,u) {
+function addButton(doc,n,u) {
 	let p = n.parentNode;
 	n = n.cloneNode(!0);
 	
 	n.id = addon.tag;
 	n.title = 'Install Extension';
-	n.innerHTML = '<span class="octicon octicon-plus"></span>Add to ' + Services.appinfo.name;
+	n.textContent = 'Add to ' + Services.appinfo.name;
+
+	let s = n.insertBefore(doc.createElement('span'), n.firstChild);
+	s.className = 'octicon octicon-plus';
 	p.appendChild(n);
 	
 	n.addEventListener('click', onClickHanlder, false);
@@ -159,7 +162,7 @@ function onPageLoad(doc) {
 		
 		if(n && n.textContent.trim() === 'Download ZIP') {
 			
-			addButton(n);
+			addButton(doc,n);
 		}
 	}
 	
@@ -178,7 +181,7 @@ function onPageLoad(doc) {
 					'archive', b.join(':') + '.zip'
 				].join('/');
 			
-			addButton(n,u);
+			addButton(doc,n,u);
 		}
 	}
 }
