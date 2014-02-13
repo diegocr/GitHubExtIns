@@ -54,7 +54,7 @@ function onClickHanlder(ev) {
 	this.style.setProperty('background','url('+iBG+') repeat','important');
 	this.setAttribute(addon.tag,1);
 	
-	xhr(this.href || this.getAttribute(addon.tag),data => {
+	xhr(this.href || this.getAttribute('href'),data => {
 		let iStream = Cc["@mozilla.org/io/arraybuffer-input-stream;1"]
 			.createInstance(Ci.nsIArrayBufferInputStream);
 		
@@ -143,7 +143,7 @@ function addButton(n,u) {
 	n.addEventListener('click', onClickHanlder, false);
 	
 	if(u) {
-		n.setAttribute(addon.tag,u);
+		n.setAttribute('href',u);
 		n.style.cursor = 'pointer';
 	}
 }
@@ -151,23 +151,13 @@ function addButton(n,u) {
 function onPageLoad(doc) {
 	if(doc.getElementById(addon.tag)) return;
 	
-	if([].some.call(doc.querySelectorAll('table.files > tbody > tr > td.content'),
-		(n) => 'install.rdf' === n.textContent.trim())) {
-		
-		let c = 7, n;
-		while(c-- && !(n=doc.querySelector('a.minibutton:nth-child('+c+')')));
-		
-		if(n && n.textContent.trim() === 'Download ZIP') {
-			
-			addButton(n);
-		}
-	}
-	
 	if(doc.location.pathname.replace(/\/[^/]+$/,'').substr(-4) === 'pull') {
 		// Based on work by Jerone: https://github.com/jerone/UserScripts
 		
-		let r = doc.location.pathname.split('/').filter(String).shift();
-		if(~(addon.branch.getPrefType('prs') && addon.branch.getCharPref('prs') || '').split(',').indexOf(r)) {
+		let r = '' + doc.location.pathname.split('/').filter(String).slice(1,2),
+			v = addon.branch.getPrefType('prs') && addon.branch.getCharPref('prs') || '';
+		
+		if(~v.toLowerCase().split(',').indexOf(r.toLowerCase())) {
 			
 			let n = doc.querySelectorAll('span.commit-ref.current-branch.css-truncate.js-selectable-text.expandable')[1],
 				b = n.textContent.trim().split(':'),
@@ -179,6 +169,17 @@ function onPageLoad(doc) {
 				].join('/');
 			
 			addButton(n,u);
+		}
+	}
+	else if([].some.call(doc.querySelectorAll('table.files > tbody > tr > td.content'),
+		(n) => 'install.rdf' === n.textContent.trim())) {
+		
+		let c = 7, n;
+		while(c-- && !(n=doc.querySelector('a.minibutton:nth-child('+c+')')));
+		
+		if(n && n.textContent.trim() === 'Download ZIP') {
+			
+			addButton(n);
 		}
 	}
 }
