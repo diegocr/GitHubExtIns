@@ -198,7 +198,7 @@ function loadIntoWindow(window) {
 			if('class' == m.attributeName) {
 				if(~m.oldValue.indexOf('loading')
 				|| m.oldValue === 'context-loader') {
-					window.setTimeout(onPageLoad.bind(null,doc),620);
+					window.setTimeout(onPageLoad.bind(null,doc),820);
 				}
 				break;
 			}
