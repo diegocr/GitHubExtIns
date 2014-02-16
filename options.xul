@@ -1,6 +1,15 @@
 <?xml version="1.0"?>
 <vbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+	<setting pref="extensions.githubextensioninstaller.nme" type="menulist" title="Notification Method">
+		<menulist>
+			<menupopup>
+				<menuitem value="0" label="None"/>
+				<menuitem value="1" label="Modal Dialog"/>
+				<menuitem value="2" label="Alerts Service"/>
+			</menupopup>
+		</menulist>
+	</setting>
 	<setting pref="extensions.githubextensioninstaller.prs" type="string" title="PR Repos:">
-		Comma-separated list of repositories where the button will be added on PRs.
+		Comma-separated list of repositories where the button will be added on its PRs.
 	</setting>
 </vbox>

@@ -19,6 +19,7 @@ Cu.import("resource://gre/modules/AddonManager.jsm");
 function LOG(m) (m = addon.name + ' Message @ '
 	+ (new Date()).toISOString() + "\n> " + m,
 		dump(m + "\n"), Services.console.logStringMessage(m));
+function rsc(n) 'resource://' + addon.tag + '/' + n;
 
 let i$ = {
 	onOpenWindow: function(aWindow) {
@@ -36,6 +37,22 @@ let i$ = {
 	onWindowTitleChange: function() {}
 };
 
+let showAlertNotification = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
+showAlertNotification = showAlertNotification.showAlertNotification.bind(showAlertNotification);
+
+function iNotify(aMsg, callback) {
+	let nme = addon.branch.getIntPref('nme');
+	
+	if(nme == 2) {
+		showAlertNotification(rsc("icon.png"),addon.name,aMsg,!1,"",
+			(s,t) => t == "alertshow" || callback(t));
+	} else {
+		if(nme) Services.prompt.alert(null,addon.name,aMsg);
+		
+		callback();
+	}
+}
+
 function onClickHanlder(ev) {
 	ev.preventDefault();
 	
@@ -50,7 +67,7 @@ function onClickHanlder(ev) {
 	let d = this.ownerDocument,
 		l = this.lastChild,
 		f = this.firstChild;
-	l.textContent = 'Installing...';
+	l.textContent = ' Installing...';
 	f.className = f.className.replace('plus','hourglass');
 	d.body.appendChild(d.createElement('style')).textContent = '@keyframes '
 		+addon.tag+'{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';
@@ -118,8 +135,7 @@ function onClickHanlder(ev) {
 						}
 						f.style.animation = null;
 						f.className = f.className.replace('hourglass',c);
-						Services.prompt.alert(null,addon.name,aMsg);
-						oFile.remove(!1);
+						iNotify(aMsg, () => oFile.remove(!1));
 					};
 					
 					aInstall.addListener({
@@ -315,9 +331,18 @@ function startup(data) {
 		};
 		addon.branch = Services.prefs.getBranch('extensions.'+addon.tag+'.');
 		
+		let io = Services.io;
+		io.getProtocolHandler("resource")
+			.QueryInterface(Ci.nsIResProtocolHandler)
+			.setSubstitution(addon.tag,
+				io.newURI(__SCRIPT_URI_SPEC__+'/../',null,null));
+		
 		i$.wmf(loadIntoWindowStub);
 		Services.wm.addListener(i$);
 		
+		if(!addon.branch.getPrefType('nme')) {
+			addon.branch.setIntPref('nme',2);
+		}
 		addon.branch.setCharPref('version', addon.version);
 	});
 }
@@ -328,6 +353,10 @@ function shutdown(data, reason) {
 	
 	Services.wm.removeListener(i$);
 	i$.wmf(unloadFromWindow);
+	
+	Services.io.getProtocolHandler("resource")
+		.QueryInterface(Ci.nsIResProtocolHandler)
+		.setSubstitution(addon.tag,null);
 }
 
 function install(data, reason) {}
