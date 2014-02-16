@@ -20,12 +20,6 @@ function LOG(m) (m = addon.name + ' Message @ '
 	+ (new Date()).toISOString() + "\n> " + m,
 		dump(m + "\n"), Services.console.logStringMessage(m));
 
-let iBG =
-	'data:;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAIAAAAC64paAAAAGXRFWHRTb2Z0d2F'+
-	'yZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAGlJREFUeNqc0cEJACEMRFFNARaw/RexFe1dG3AjCBJ'+
-	'JYDL/kNtjDqn9lRLUnlrixjd5qVdo6WNQOhiXN05Jg7PyYEJuzMmFaRn+GZG6KrQMlxHpY1A6GJc'+
-	'3TkmDs/JgQm7MyYVpqf0CDABVcj3T2ITzOAAAAABJRU5ErkJggg==';
-
 let i$ = {
 	onOpenWindow: function(aWindow) {
 		loadIntoWindowStub(aWindow
@@ -51,8 +45,16 @@ function onClickHanlder(ev) {
 		return;
 	}
 	
-	this.style.setProperty('background','url('+iBG+') repeat','important');
 	this.setAttribute(addon.tag,1);
+	this.className += ' danger disabled';
+	let d = this.ownerDocument,
+		l = this.lastChild,
+		f = this.firstChild;
+	l.textContent = 'Installing...';
+	f.className = f.className.replace('plus','hourglass');
+	d.body.appendChild(d.createElement('style')).textContent = '@keyframes '
+		+addon.tag+'{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';
+	f.style.animation = addon.tag + ' 3s infinite linear';
 	
 	xhr(this.href || this.getAttribute('href'),data => {
 		let iStream = Cc["@mozilla.org/io/arraybuffer-input-stream;1"]
@@ -105,6 +107,17 @@ function onClickHanlder(ev) {
 				
 				AddonManager.getInstallForFile(oFile,aInstall => {
 					let done = (aMsg) => {
+						let c = 'check';
+						if(typeof aMsg === 'number') {
+							l.textContent = 'Error ' + aMsg;
+							aMsg = 'Installation failed ('+aMsg+')';
+							c = 'alert';
+						} else {
+							l.textContent = 'Succeed!';
+							this.className = this.className.replace('danger','');
+						}
+						f.style.animation = null;
+						f.className = f.className.replace('hourglass',c);
 						Services.prompt.alert(null,addon.name,aMsg);
 						oFile.remove(!1);
 					};
