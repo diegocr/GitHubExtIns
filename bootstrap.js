@@ -137,7 +137,9 @@ function addButton(n,u) {
 	
 	n.id = addon.tag;
 	n.title = 'Install Extension';
-	n.textContent = '\u002B Add to ' + Services.appinfo.name;
+	n.textContent = ' Add to ' + Services.appinfo.name;
+	n.insertBefore(n.ownerDocument.createElement('span'),
+		n.firstChild).className = 'octicon octicon-plus';
 	p.appendChild(n);
 	
 	n.addEventListener('click', onClickHanlder, false);
@@ -145,6 +147,8 @@ function addButton(n,u) {
 	if(u) {
 		n.setAttribute('href',u);
 		n.style.cursor = 'pointer';
+		n.style.setProperty('box-shadow','none','important');
+		n.className += ' button primary pseudo-class-active';
 	}
 }
 
