@@ -1,12 +1,12 @@
 /* ***** BEGIN LICENSE BLOCK *****
- * 
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/
- * 
+ *
  * Contributor(s):
  *   Diego Casorran <dcasorran@gmail.com> (Original Author)
- * 
+ *
  * ***** END LICENSE BLOCK ***** */
 
 let {classes:Cc,interfaces:Ci,utils:Cu,results:Cr} = Components, addon;
@@ -42,26 +42,26 @@ showAlertNotification = showAlertNotification.showAlertNotification.bind(showAle
 
 function iNotify(aMsg, callback) {
 	let nme = addon.branch.getIntPref('nme');
-	
+
 	if(nme == 2) {
 		showAlertNotification(rsc("icon.png"),addon.name,aMsg,!1,"",
 			(s,t) => t == "alertshow" || callback(t));
 	} else {
 		if(nme) Services.prompt.alert(null,addon.name,aMsg);
-		
+
 		callback();
 	}
 }
 
 function onClickHanlder(ev) {
 	ev.preventDefault();
-	
+
 	if(this.hasAttribute(addon.tag)) {
 		Services.prompt.alert(null,addon.name,
 			"Don't click me more than once, reload the page to retry.");
 		return;
 	}
-	
+
 	this.setAttribute(addon.tag,1);
 	this.className += ' danger disabled';
 	let d = this.ownerDocument,
@@ -72,16 +72,16 @@ function onClickHanlder(ev) {
 	d.body.appendChild(d.createElement('style')).textContent = '@keyframes '
 		+addon.tag+'{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';
 	f.style.animation = addon.tag + ' 3s infinite linear';
-	
+
 	xhr(this.href || this.getAttribute('href'),data => {
 		let iStream = Cc["@mozilla.org/io/arraybuffer-input-stream;1"]
 			.createInstance(Ci.nsIArrayBufferInputStream);
-		
+
 		iStream.setData(data,0,data.byteLength);
-		
+
 		let nFile = FileUtils.getFile("TmpD", [Math.random()])
 			oStream = FileUtils.openSafeFileOutputStream(nFile);
-		
+
 		NetUtil.asyncCopy(iStream, oStream, aStatus => {
 			if(!Components.isSuccessCode(aStatus)) {
 				Services.prompt.alert(null,addon.name,
@@ -91,37 +91,39 @@ function onClickHanlder(ev) {
 						.createInstance(Ci.nsIZipReader),
 					zipWriter = Cc["@mozilla.org/zipwriter;1"]
 							.createInstance(Ci.nsIZipWriter);
-				
+
 				let oFile = FileUtils.getFile("TmpD", [addon.tag+'.xpi']);
 				zipReader.open(nFile);
 				zipWriter.open(oFile, 0x2c);
-				
-				let m = zipReader.findEntries("*/*");
+
+				let p = (this.getAttribute('path') || "*/"),
+					m = zipReader.findEntries(p + "*");
+				p = p.substr(2);
 				while(m.hasMore()) {
 					let f = m.getNext(),
 						e = zipReader.getEntry(f);
-					
+
 					if(!(e instanceof Ci.nsIZipEntry))
 						continue;
-					
-					let n = (e.name||f).replace(/^[^\/]+\//,'');
+
+					let n = (e.name||f).replace(/^[^\/]+\//,'').replace(p,'');
 					if(!n) continue;
-					
+
 					if(e.isDirectory) {
-						
+
 						zipWriter.addEntryDirectory(n,e.lastModifiedTime,!1);
-						
+
 					} else {
-						
+
 						zipWriter.addEntryStream(n, e.lastModifiedTime,
 							Ci.nsIZipWriter.COMPRESSION_FASTEST,
 							zipReader.getInputStream(f), !1);
 					}
 				}
-				
+
 				zipReader.close();
 				zipWriter.close();
-				
+
 				AddonManager.getInstallForFile(oFile,aInstall => {
 					let done = (aMsg) => {
 						let c = 'check';
@@ -137,23 +139,23 @@ function onClickHanlder(ev) {
 						f.className = f.className.replace('hourglass',c);
 						iNotify(aMsg, () => oFile.remove(!1));
 					};
-					
+
 					aInstall.addListener({
 						onInstallFailed : function(aInstall) {
 							aInstall.removeListener(this);
-							
+
 							done(aInstall.error);
 						},
 						onInstallEnded : function(aInstall,aAddon) {
 							aInstall.removeListener(this);
-							
+
 							done(aAddon.name + ' ' + aAddon.version
 								+ ' has been installed successfully.');
 						}
 					});
 					aInstall.install();
 				});
-				
+
 				nFile.remove(!1);
 			}
 		});
@@ -161,37 +163,54 @@ function onClickHanlder(ev) {
 }
 
 function addButton(n,u) {
+	if([n.nextElementSibling,n.previousElementSibling]
+		.some(e=>e&&~e.className.indexOf(addon.tag)))
+			return;
+
 	let p = n.parentNode;
 	n = n.cloneNode(!0);
-	
-	n.id = addon.tag;
+
+	n.className += ' ' + addon.tag;
 	n.title = 'Install Extension';
 	n.textContent = ' Add to ' + Services.appinfo.name;
 	n.insertBefore(n.ownerDocument.createElement('span'),
 		n.firstChild).className = 'octicon octicon-plus';
-	p.appendChild(n);
-	
+
+	if(typeof u !== 'object') {
+		p.appendChild(n);
+	} else {
+		p.insertBefore(n, p.firstElementChild);
+	}
+
 	n.addEventListener('click', onClickHanlder, false);
-	
+
 	if(u) {
-		n.setAttribute('href',u);
+		let b = n.ownerDocument.querySelector('div.breadcrumb');
+
+		n.setAttribute('href', u );
 		n.style.cursor = 'pointer';
 		n.style.setProperty('box-shadow','none','important');
-		n.className += ' button primary pseudo-class-active';
+		n.setAttribute('path', b && b.textContent
+			.replace(" ",'','g').replace(/^[^/]+/,'*')||'');
+
+		if(typeof u !== 'object') {
+			n.className += ' button primary pseudo-class-active';
+		} else {
+			n.className = 'minibutton pseudo-class-active';
+			n.firstChild.style.verticalAlign = 'baseline';
+		}
 	}
 }
 
 function onPageLoad(doc) {
-	if(doc.getElementById(addon.tag)) return;
-	
 	if(doc.location.pathname.replace(/\/[^/]+$/,'').substr(-4) === 'pull') {
 		// Based on work by Jerone: https://github.com/jerone/UserScripts
-		
+
 		let r = '' + doc.location.pathname.split('/').filter(String).slice(1,2),
 			v = addon.branch.getPrefType('prs') && addon.branch.getCharPref('prs') || '';
-		
+
 		if(~v.toLowerCase().split(',').indexOf(r.toLowerCase())) {
-			
+
 			let n = doc.querySelectorAll('span.commit-ref.current-branch.css-truncate.js-selectable-text.expandable')[1],
 				b = n.textContent.trim().split(':'),
 				t = b.shift(),
@@ -200,19 +219,35 @@ function onPageLoad(doc) {
 					doc.querySelector('.js-current-repository').textContent,
 					'archive', b.join(':') + '.zip'
 				].join('/');
-			
+
 			addButton(n,u);
 		}
 	}
 	else if([].some.call(doc.querySelectorAll('table.files > tbody > tr > td.content'),
 		(n) => 'install.rdf' === n.textContent.trim())) {
-		
-		let c = 7, n;
+
+		let c = 7, n, z;
 		while(c-- && !(n=doc.querySelector('a.minibutton:nth-child('+c+')')));
-		
+
 		if(n && n.textContent.trim() === 'Download ZIP') {
-			
-			addButton(n);
+			c = doc.querySelector('div.only-with-full-nav');
+
+			if(!c || doc.defaultView.getComputedStyle(c).getPropertyValue('display') == 'block') {
+				addButton(n);
+			} else {
+				z = n;
+				n = 0;
+			}
+		}
+
+		if(!n) {
+			n = doc.querySelector('div.file-navigation');
+			n = n && n.firstElementChild;
+
+			if( n ) {
+
+				addButton(n,z);
+			}
 		}
 	}
 }
@@ -221,7 +256,7 @@ function loadIntoWindow(window) {
 	if(window.document.documentElement
 		.getAttribute("windowtype") != 'navigator:browser')
 			return;
-	
+
 	function onMutation(ms,doc) {
 		for(let m of ms) {
 			if('class' == m.attributeName) {
@@ -233,22 +268,22 @@ function loadIntoWindow(window) {
 			}
 		}
 	}
-	
+
 	let domload = ev => {
 		let doc = ev.originalTarget;
-		
+
 		if(!(doc.location && doc.location.host == 'github.com'))
 			return;
-		
+
 		['page-context-loader','context-loader'].forEach(e => {
-			
+
 			e = doc.getElementsByClassName(e);
 			for(let o of e) {
 				new doc.defaultView.MutationObserver(m => onMutation(m,doc))
 					.observe(o,{attributes:!0,attributeOldValue:!0});
 			}
 		});
-		
+
 		onPageLoad(doc);
 	};
 	getBrowser(window).addEventListener('DOMContentLoaded', domload, false);
@@ -258,7 +293,7 @@ function loadIntoWindow(window) {
 function xhr(url,cb) {
 	let xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
 		.createInstance(Ci.nsIXMLHttpRequest);
-	
+
 	let handler = ev => {
 		evf(m => xhr.removeEventListener(m,handler,!1));
 		switch(ev.type) {
@@ -274,10 +309,10 @@ function xhr(url,cb) {
 				break;
 		}
 	};
-	
+
 	let evf = f => ['load','error','abort'].forEach(f);
 	evf(m => xhr.addEventListener( m, handler, false));
-	
+
 	xhr.mozBackgroundRequest = true;
 	xhr.open('GET', url, true);
 	xhr.channel.loadFlags |=
@@ -289,18 +324,18 @@ function xhr(url,cb) {
 }
 
 function getBrowser(w) {
-	
+
 	if(typeof w.getBrowser === 'function')
 		return w.getBrowser();
-	
+
 	if("gBrowser" in w)
 		return w.gBrowser;
-	
+
 	return w.BrowserApp.deck;
 }
 
 function loadIntoWindowStub(domWindow) {
-	
+
 	if(domWindow.document.readyState == "complete") {
 		loadIntoWindow(domWindow);
 	} else {
@@ -330,16 +365,16 @@ function startup(data) {
 			wms: new WeakMap()
 		};
 		addon.branch = Services.prefs.getBranch('extensions.'+addon.tag+'.');
-		
+
 		let io = Services.io;
 		io.getProtocolHandler("resource")
 			.QueryInterface(Ci.nsIResProtocolHandler)
 			.setSubstitution(addon.tag,
 				io.newURI(__SCRIPT_URI_SPEC__+'/../',null,null));
-		
+
 		i$.wmf(loadIntoWindowStub);
 		Services.wm.addListener(i$);
-		
+
 		if(!addon.branch.getPrefType('nme')) {
 			addon.branch.setIntPref('nme',2);
 		}
@@ -350,10 +385,10 @@ function startup(data) {
 function shutdown(data, reason) {
 	if(reason == APP_SHUTDOWN)
 		return;
-	
+
 	Services.wm.removeListener(i$);
 	i$.wmf(unloadFromWindow);
-	
+
 	Services.io.getProtocolHandler("resource")
 		.QueryInterface(Ci.nsIResProtocolHandler)
 		.setSubstitution(addon.tag,null);
