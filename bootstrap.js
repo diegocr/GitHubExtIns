@@ -125,7 +125,7 @@ function onClickHanlder(ev) {
 				zipWriter.close();
 
 				AddonManager.getInstallForFile(oFile,aInstall => {
-					let done = (aMsg) => {
+					let done = (aMsg,aAddon) => {
 						let c = 'check';
 						if(typeof aMsg === 'number') {
 							l.textContent = 'Error ' + aMsg;
@@ -137,7 +137,36 @@ function onClickHanlder(ev) {
 						}
 						f.style.animation = null;
 						f.className = f.className.replace('hourglass',c);
-						iNotify(aMsg, () => oFile.remove(!1));
+						iNotify(aMsg, () => {
+							oFile.remove(!1);
+
+							if(aAddon && aAddon.pendingOperations) {
+								let m = aAddon.name + ' requires restart.\n\n'
+									+ 'Would you like to restart '
+									+ Services.appinfo.name + ' now?';
+
+								m = Services.prompt.confirmEx(null,
+									addon.name,m,1027,0,0,0,null,{});
+
+								if(!m) {
+									let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"]
+										.createInstance(Ci.nsISupportsPRBool);
+
+									Services.obs.notifyObservers(cancelQuit,
+										"quit-application-requested", null);
+
+									if(!cancelQuit.data) {
+										Services.obs.notifyObservers(null,
+											"quit-application-granted", null);
+
+										Services.startup.quit(
+											Ci.nsIAppStartup.eAttemptQuit |
+											Ci.nsIAppStartup.eRestart
+										);
+									}
+								}
+							}
+						});
 					};
 
 					aInstall.addListener({
@@ -150,7 +179,7 @@ function onClickHanlder(ev) {
 							aInstall.removeListener(this);
 
 							done(aAddon.name + ' ' + aAddon.version
-								+ ' has been installed successfully.');
+								+ ' has been installed successfully.',aAddon);
 						}
 					});
 					aInstall.install();
