@@ -19,7 +19,6 @@ Cu.import("resource://gre/modules/AddonManager.jsm");
 function LOG(m) (m = addon.name + ' Message @ '
 	+ (new Date()).toISOString() + "\n> " + m,
 		dump(m + "\n"), Services.console.logStringMessage(m));
-function rsc(n) 'resource://' + addon.tag + '/' + n;
 
 let i$ = {
 	onOpenWindow: function(aWindow) {
@@ -44,7 +43,7 @@ function iNotify(aMsg, callback) {
 	let nme = addon.branch.getIntPref('nme');
 
 	if(nme == 2) {
-		showAlertNotification(rsc("icon.png"),addon.name,aMsg,!1,"",
+		showAlertNotification(addon.icon,addon.name,aMsg,!1,"",
 			(s,t) => t == "alertshow" || callback(t));
 	} else {
 		if(nme) Services.prompt.alert(null,addon.name,aMsg);
@@ -390,16 +389,11 @@ function startup(data) {
 			id: data.id,
 			name: data.name,
 			version: data.version,
+			icon: data.getResourceURI("icon.png").spec,
 			tag: data.name.toLowerCase().replace(/[^\w]/g,''),
 			wms: new WeakMap()
 		};
 		addon.branch = Services.prefs.getBranch('extensions.'+addon.tag+'.');
-
-		let io = Services.io;
-		io.getProtocolHandler("resource")
-			.QueryInterface(Ci.nsIResProtocolHandler)
-			.setSubstitution(addon.tag,
-				io.newURI(__SCRIPT_URI_SPEC__+'/../',null,null));
 
 		i$.wmf(loadIntoWindowStub);
 		Services.wm.addListener(i$);
@@ -417,10 +411,6 @@ function shutdown(data, reason) {
 
 	Services.wm.removeListener(i$);
 	i$.wmf(unloadFromWindow);
-
-	Services.io.getProtocolHandler("resource")
-		.QueryInterface(Ci.nsIResProtocolHandler)
-		.setSubstitution(addon.tag,null);
 }
 
 function install(data, reason) {}
