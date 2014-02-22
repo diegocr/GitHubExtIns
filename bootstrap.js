@@ -15,6 +15,7 @@ Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
+Cu.import('resource://gre/modules/PopupNotifications.jsm');
 
 function LOG(m) (m = addon.name + ' Message @ '
 	+ (new Date()).toISOString() + "\n> " + m,
@@ -38,19 +39,6 @@ let i$ = {
 
 let showAlertNotification = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
 showAlertNotification = showAlertNotification.showAlertNotification.bind(showAlertNotification);
-
-function iNotify(aMsg, callback) {
-	let nme = addon.branch.getIntPref('nme');
-
-	if(nme == 2) {
-		showAlertNotification(addon.icon,addon.name,aMsg,!1,"",
-			(s,t) => t == "alertshow" || callback(t));
-	} else {
-		if(nme) Services.prompt.alert(null,addon.name,aMsg);
-
-		callback();
-	}
-}
 
 function onClickHanlder(ev) {
 	ev.preventDefault();
@@ -124,61 +112,68 @@ function onClickHanlder(ev) {
 				zipWriter.close();
 
 				AddonManager.getInstallForFile(oFile,aInstall => {
-					let done = (aMsg,aAddon) => {
-						let c = 'check';
-						if(typeof aMsg === 'number') {
-							l.textContent = 'Error ' + aMsg;
-							aMsg = 'Installation failed ('+aMsg+')';
-							c = 'alert';
-						} else {
-							l.textContent = 'Succeed!';
-							this.className = this.className.replace('danger','');
-						}
+					let success = (aAddon) => {
+						l.textContent = 'Succeed!';
+						this.className = this.className.replace('danger','');
 						f.style.animation = null;
-						f.className = f.className.replace('hourglass',c);
-						iNotify(aMsg, () => {
-							oFile.remove(!1);
+						f.className = f.className.replace('hourglass','check');
 
-							if(aAddon && aAddon.pendingOperations) {
-								let m = aAddon.name + ' requires restart.\n\n'
-									+ 'Would you like to restart '
-									+ Services.appinfo.name + ' now?';
+						const anchorID = "addons-notification-icon";
+						const notificationID = "addon-install-complete";
+						let options = {
+							timeout: Date.now() + 30000,
+							removeOnDismissal: true
+						};
 
-								m = Services.prompt.confirmEx(null,
-									addon.name,m,1027,0,0,0,null,{});
+						let gBrowser = getBrowser(),
+							gDoc = gBrowser.ownerDocument,
+							gNavigatorBundle = gDoc.getElementById("bundle_browser");
 
-								if(!m) {
-									let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"]
-										.createInstance(Ci.nsISupportsPRBool);
+						let notify = new PopupNotifications(
+							gBrowser,
+							gDoc.getElementById("notification-popup"),
+							gDoc.getElementById("notification-popup-box"));
 
-									Services.obs.notifyObservers(cancelQuit,
-										"quit-application-requested", null);
+						let messageString, action;
+						if (aAddon.pendingOperations != AddonManager.PENDING_NONE) {
+							messageString = gNavigatorBundle.getString("addonsInstalledNeedsRestart");
+							action = {
+								label: gNavigatorBundle.getString("addonInstallRestartButton"),
+								accessKey: gNavigatorBundle.getString("addonInstallRestartButton.accesskey"),
+								callback: restart
+							};
+						} else {
+							messageString = gNavigatorBundle.getString("addonsInstalled");
+							action = null;
+						}
 
-									if(!cancelQuit.data) {
-										Services.obs.notifyObservers(null,
-											"quit-application-granted", null);
+						Cu.import("resource://gre/modules/PluralForm.jsm");
+						messageString = PluralForm.get(1, messageString);
+						messageString = messageString.replace("#1", aAddon.name);
+						messageString = messageString.replace("#2", 1);
+						messageString = messageString.replace("#3", Services.appinfo.name);
 
-										Services.startup.quit(
-											Ci.nsIAppStartup.eAttemptQuit |
-											Ci.nsIAppStartup.eRestart
-										);
-									}
-								}
-							}
-						});
+						notify.show(gBrowser.selectedBrowser, 
+									notificationID, messageString,
+									anchorID, action, null, options);
+
+						oFile.remove(!1);
 					};
 
 					aInstall.addListener({
-						onInstallFailed : function(aInstall) {
+						onInstallFailed : function(aInstall,aAddon) {
 							aInstall.removeListener(this);
-
-							done(aInstall.error);
+							let aMsg = aInstall.error;
+							l.textContent = 'Error ' + aMsg;
+							f.style.animation = null;
+							f.className = f.className.replace('hourglass','alert');
+							showAlertNotification(addon.icon,aAddon.name,
+								'Installation failed ('+aMsg+')',!1,"",(s,t) => t == "alertshow" || callback(t));
 						},
 						onInstallEnded : function(aInstall,aAddon) {
 							aInstall.removeListener(this);
 
-							done(aAddon.name + ' ' + aAddon.version
-								+ ' has been installed successfully.',aAddon);
+							success(aAddon);
 						}
 					});
 					aInstall.install();
@@ -188,6 +183,24 @@ function onClickHanlder(ev) {
 			}
 		});
 	});
+}
+
+function restart() {
+	let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"]
+		.createInstance(Ci.nsISupportsPRBool);
+
+	Services.obs.notifyObservers(cancelQuit,
+		"quit-application-requested", null);
+
+	if(!cancelQuit.data) {
+		Services.obs.notifyObservers(null,
+			"quit-application-granted", null);
+
+		Services.startup.quit(
+			Ci.nsIAppStartup.eAttemptQuit |
+			Ci.nsIAppStartup.eRestart
+		);
+	}
 }
 
 function addButton(n,u) {
@@ -352,6 +365,8 @@ function xhr(url,cb) {
 }
 
 function getBrowser(w) {
+	if(!w)
+		w = getBrowserWindow();
 
 	if(typeof w.getBrowser === 'function')
 		return w.getBrowser();
@@ -360,6 +375,14 @@ function getBrowser(w) {
 		return w.gBrowser;
 
 	return w.BrowserApp.deck;
+}
+
+const windowMediator = Components
+   .classes['@mozilla.org/appshell/window-mediator;1']
+   .getService(Components.interfaces.nsIWindowMediator);
+
+function getBrowserWindow() {
+  return windowMediator.getMostRecentWindow("navigator:browser");
 }
 
 function loadIntoWindowStub(domWindow) {
@@ -398,9 +421,6 @@ function startup(data) {
 		i$.wmf(loadIntoWindowStub);
 		Services.wm.addListener(i$);
 
-		if(!addon.branch.getPrefType('nme')) {
-			addon.branch.setIntPref('nme',2);
-		}
 		addon.branch.setCharPref('version', addon.version);
 	});
 }
