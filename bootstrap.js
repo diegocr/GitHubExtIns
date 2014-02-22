@@ -124,6 +124,8 @@ function onClickHanlder(ev) {
 							removeOnDismissal: true
 						};
 
+						if(addon.icon) options.popupIconURL = addon.icon;
+
 						let gBrowser = getBrowser(),
 							gDoc = gBrowser.ownerDocument,
 							gNavigatorBundle = gDoc.getElementById("bundle_browser");
