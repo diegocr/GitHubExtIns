@@ -15,7 +15,6 @@ Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
-Cu.import('resource://gre/modules/PopupNotifications.jsm');
 
 function LOG(m) (m = addon.name + ' Message @ '
 	+ (new Date()).toISOString() + "\n> " + m,
@@ -129,6 +128,7 @@ function onClickHanlder(ev) {
 							gDoc = gBrowser.ownerDocument,
 							gNavigatorBundle = gDoc.getElementById("bundle_browser");
 
+						Cu.import('resource://gre/modules/PopupNotifications.jsm');
 						let notify = new PopupNotifications(
 							gBrowser,
 							gDoc.getElementById("notification-popup"),
