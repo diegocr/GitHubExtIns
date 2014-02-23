@@ -6,6 +6,7 @@
 				<menuitem value="0" label="None"/>
 				<menuitem value="1" label="Modal Dialog"/>
 				<menuitem value="2" label="Alerts Service"/>
+				<menuitem value="3" label="Native Popup"/>
 			</menupopup>
 		</menulist>
 	</setting>

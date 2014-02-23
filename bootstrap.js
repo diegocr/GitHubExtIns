@@ -15,6 +15,7 @@ Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 function LOG(m) (m = addon.name + ' Message @ '
 	+ (new Date()).toISOString() + "\n> " + m,
@@ -39,10 +40,23 @@ let i$ = {
 let showAlertNotification = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
 showAlertNotification = showAlertNotification.showAlertNotification.bind(showAlertNotification);
 
-function iNotify(aMsg, callback) {
+function iNotify(aAddon, aMsg, callback) {
 	let nme = addon.branch.getIntPref('nme');
 
-	if(nme == 2) {
+	if(nme > 1) {
+		if(nme == 3) try {
+			if(aAddon) {
+				let info = {
+					installs: [{addon:aAddon,name:aAddon.name + ' ' + aAddon.version}],
+					originatingWindow: Services.wm.getMostRecentWindow('navigator:browser').gBrowser.contentWindow,
+					QueryInterface: XPCOMUtils.generateQI([Ci.amIWebInstallInfo])
+				};
+				Services.obs.notifyObservers(info, 'addon-install-complete', null);
+				return callback(null);
+			}
+		} catch(e) {
+			Cu.reportError(e);
+		}
 		showAlertNotification(addon.icon,addon.name,aMsg,!1,"",
 			(s,t) => t == "alertshow" || callback(t));
 	} else {
@@ -136,10 +150,10 @@ function onClickHanlder(ev) {
 						}
 						f.style.animation = null;
 						f.className = f.className.replace('hourglass',c);
-						iNotify(aMsg, () => {
+						iNotify(aAddon, aMsg, aResult => {
 							oFile.remove(!1);
 
-							if(aAddon && aAddon.pendingOperations) {
+							if(aResult !== null && aAddon && aAddon.pendingOperations) {
 								let m = aAddon.name + ' requires restart.\n\n'
 									+ 'Would you like to restart '
 									+ Services.appinfo.name + ' now?';
