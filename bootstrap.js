@@ -6,6 +6,9 @@
  *
  * Contributor(s):
  *   Diego Casorran <dcasorran@gmail.com> (Original Author)
+ *	 Jerone
+ *	 Zulkarnain K.
+ *	 Noitidart <noitidart@gmail.com> (Authored Contirubtion: "Install from Edit Page without Committing")
  *
  * ***** END LICENSE BLOCK ***** */
 
@@ -16,10 +19,6 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/osfile.jsm");
-const { TextEncoder } = Cu.import("resource://gre/modules/commonjs/toolkit/loader.js", {});
-
-var TEncoder;
 
 function LOG(m) (m = addon.name + ' Message @ '
 	+ (new Date()).toISOString() + "\n> " + m,
@@ -113,7 +112,7 @@ function onClickHanlder(ev) {
 					zipWriter = Cc["@mozilla.org/zipwriter;1"]
 							.createInstance(Ci.nsIZipWriter);
 
-				let oFile = FileUtils.getFile("TmpD", [addon.tag+'.xpi']);				
+				let oFile = FileUtils.getFile("TmpD", [addon.tag+'.xpi']);
 				
 				zipReader.open(nFile);
 				zipWriter.open(oFile, 0x2c);
@@ -125,8 +124,6 @@ function onClickHanlder(ev) {
 				if (this.hasAttribute('filepath')) {
 					var fileName = this.getAttribute('filepath');
 					var useUncommitedFilePath = this.getAttribute('filepath').replace(this.getAttribute('path'), ''); //relative to path, because thats what is getting written to xpi
-					fileName = fileName.substr(fileName.lastIndexOf('/')+1);					
-					var tmpFileOfUncommitedFile = new FileUtils.File(oFile.parent.path + '\\' + fileName)
 				}
 				
 				while(m.hasMore()) {
@@ -145,7 +142,9 @@ function onClickHanlder(ev) {
 
 					} else {
 						if (useUncommitedFilePath && n == useUncommitedFilePath) {
-							//skip adding file
+							let is = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
+							is.data = this.ownerDocument.querySelector('#blob_contents').value;
+							zipWriter.addEntryStream(n, Date.now(), Ci.nsIZipWriter.COMPRESSION_FASTEST, is, !1);
 						} else {							
 							zipWriter.addEntryStream(n, e.lastModifiedTime,
 								Ci.nsIZipWriter.COMPRESSION_FASTEST,
@@ -154,108 +153,78 @@ function onClickHanlder(ev) {
 					}
 				}
 
-				var btn = this;
-				
-				var postZipWrite = function() {
-					
-					zipReader.close();
-					zipWriter.close();
-					
-					AddonManager.getInstallForFile(oFile,aInstall => {
-						let done = (aMsg,aAddon) => {
-							let c = 'check';
-							if(typeof aMsg === 'number') {
-								l.textContent = 'Error ' + aMsg;
-								aMsg = 'Installation failed ('+aMsg+')';
-								c = 'alert';
+				zipReader.close();
+				zipWriter.close();
+
+				AddonManager.getInstallForFile(oFile,aInstall => {
+					let done = (aMsg,aAddon) => {
+						let c = 'check';
+						if(typeof aMsg === 'number') {
+							l.textContent = 'Error ' + aMsg;
+							aMsg = 'Installation failed ('+aMsg+')';
+							c = 'alert';
+						} else {
+							if (!this.hasAttribute('filepath')) {
+								l.textContent = 'Succeed!';
+								this.className = this.className.replace('danger','');
 							} else {
-								if (!btn.hasAttribute('filepath')) {
-									l.textContent = 'Succeed!';
-									btn.className = btn.className.replace('danger','');
-								} else {
-									//it is uncommited file install so allow reclicking of button
-									l.textContent = 'Installed with Uncommitted File - Reinstall';
-									btn.classList.remove('danger');
-									btn.classList.remove('disabled');
-									btn.removeAttribute(addon.tag); //so allows reinstall
-								}
+								//it is uncommited file install so allow reclicking of button
+								l.textContent = 'Installed with Uncommitted File - Reinstall';
+								this.classList.remove('danger');
+								this.classList.remove('disabled');
+								this.removeAttribute(addon.tag); //so allows reinstall
 							}
-							f.style.animation = null;
-							f.className = f.className.replace('hourglass',c);
-							iNotify(aAddon, aMsg, aResult => {
-								OS.File.remove(oFile.path);
-
-								if(aResult !== null && aAddon && aAddon.pendingOperations) {
-									let m = aAddon.name + ' requires restart.\n\n'
-										+ 'Would you like to restart '
-										+ Services.appinfo.name + ' now?';
-
-									m = Services.prompt.confirmEx(null,
-										addon.name,m,1027,0,0,0,null,{});
-
-									if(!m) {
-										let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"]
-											.createInstance(Ci.nsISupportsPRBool);
-
-										Services.obs.notifyObservers(cancelQuit,
-											"quit-application-requested", null);
-
-										if(!cancelQuit.data) {
-											Services.obs.notifyObservers(null,
-												"quit-application-granted", null);
-
-											Services.startup.quit(
-												Ci.nsIAppStartup.eAttemptQuit |
-												Ci.nsIAppStartup.eRestart
-											);
-										}
+						}
+						f.style.animation = null;
+						f.className = f.className.replace('hourglass',c);
+						iNotify(aAddon, aMsg, aResult => {
+							oFile.remove(!1);
+							if(aResult !== null && aAddon && aAddon.pendingOperations) {
+								let m = aAddon.name + ' requires restart.\n\n'
+									+ 'Would you like to restart '
+									+ Services.appinfo.name + ' now?';
+		
+								m = Services.prompt.confirmEx(null,
+									addon.name,m,1027,0,0,0,null,{});
+		
+								if(!m) {
+									let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"]
+										.createInstance(Ci.nsISupportsPRBool);
+		
+									Services.obs.notifyObservers(cancelQuit,
+										"quit-application-requested", null);
+		
+									if(!cancelQuit.data) {
+										Services.obs.notifyObservers(null,
+											"quit-application-granted", null);
+		
+										Services.startup.quit(
+											Ci.nsIAppStartup.eAttemptQuit |
+											Ci.nsIAppStartup.eRestart
+										);
 									}
 								}
-							});
-						};
-
-						aInstall.addListener({
-							onInstallFailed : function(aInstall) {
-								aInstall.removeListener(this);
-
-								done(aInstall.error);
-							},
-							onInstallEnded : function(aInstall,aAddon) {
-								aInstall.removeListener(this);
-
-								done(aAddon.name + ' ' + aAddon.version
-									+ ' has been installed successfully.',aAddon);
 							}
 						});
-						aInstall.install();
+					};
+		
+					aInstall.addListener({
+						onInstallFailed : function(aInstall) {
+							aInstall.removeListener(this);
+		
+							done(aInstall.error);
+						},
+						onInstallEnded : function(aInstall,aAddon) {
+							aInstall.removeListener(this);
+		
+							done(aAddon.name + ' ' + aAddon.version
+								+ ' has been installed successfully.',aAddon);
+						}
 					});
-
-					OS.File.remove(nFile.path);
-				};
-				var postZipWriteBinded = postZipWrite.bind(this);
-				
-				if (this.hasAttribute('filepath')) {
-							if (!TEncoder) {
-								TEncoder = new TextEncoder(); // This encoder can be reused for several writes
-							}
-							let BufferArray = TEncoder.encode(this.ownerDocument.querySelector('#blob_contents').value); // Convert the text to an array
-							let promiseCreateUncommitedFile = OS.File.writeAtomic(tmpFileOfUncommitedFile.path, BufferArray,	{
-								tmpPath: tmpFileOfUncommitedFile.path + '.tmp'
-							});
-							promiseCreateUncommitedFile.then(
-								function() {
-									zipWriter.addEntryFile(useUncommitedFilePath,
-										Ci.nsIZipWriter.COMPRESSION_FASTEST,
-										tmpFileOfUncommitedFile, !1);
-									
-									OS.File.remove(tmpFileOfUncommitedFile.path);									
-									postZipWriteBinded();
-								}
-							);
-				} else {
-					postZipWriteBinded();
-				}
-				
+					aInstall.install();
+				});
+		
+				nFile.remove(!1);
 
 			}
 		});
@@ -305,7 +274,7 @@ function addButton(n,u) {
 }
 
 function onPageLoad(doc) {
-	var editForm = doc.querySelector('.js-blob-form.js-blob-edit-form');
+
 	
 	if(doc.location.pathname.replace(/\/[^/]+$/,'').substr(-4) === 'pull') {
 		// Based on work by Jerone: https://github.com/jerone/UserScripts
@@ -354,7 +323,8 @@ function onPageLoad(doc) {
 			}
 		}
 	}
-	else if (editForm && editForm.hasAttribute('action')) {
+	else if (/github\.com\/.*?\/.*?\/edit\//.test(doc.location.href) && doc.querySelector('.js-blob-form.js-blob-edit-form') && doc.querySelector('.js-blob-form.js-blob-edit-form').hasAttribute('action')) {
+		var editForm = doc.querySelector('.js-blob-form.js-blob-edit-form');
 		var filePath = editForm.getAttribute('action');
 		let c = 7, n, z;
 		while(c-- && !(n=doc.querySelector('a.minibutton:nth-child('+c+')')));
@@ -424,8 +394,7 @@ function onPageLoad(doc) {
 								let entryFileName = entries.getNext();
 								let entryZipFile = zipReader.getEntry(entryFileName);
 							}
-							
-							
+
 							for (var i=0; i<lookFor.length; i++) {
 								var entries = zipReader.findEntries(lookFor[i] + 'install.rdf');
 								if(entries.hasMore()) {
@@ -445,8 +414,7 @@ function onPageLoad(doc) {
 							}
 
 							zipReader.close();
-							
-							OS.File.remove(nFile.path);
+							nFile.remove(!1);
 						}
 					});
 				});
