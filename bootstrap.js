@@ -323,8 +323,8 @@ function onPageLoad(doc) {
 			}
 		}
 	}
-	else if (/github\.com\/.*?\/.*?\/edit\//.test(doc.location.href) && doc.querySelector('.js-blob-form.js-blob-edit-form') && doc.querySelector('.js-blob-form.js-blob-edit-form').hasAttribute('action')) {
-		var editForm = doc.querySelector('.js-blob-form.js-blob-edit-form');
+	else if (/github\.com\/.*?\/.*?\/edit\//.test(doc.location.href) && doc.querySelector('.js-blob-form') && doc.querySelector('.js-blob-form').hasAttribute('action')) {
+		var editForm = doc.querySelector('.js-blob-form');
 		var filePath = editForm.getAttribute('action');
 		let c = 7, n, z;
 		while(c-- && !(n=doc.querySelector('a.minibutton:nth-child('+c+')')));
