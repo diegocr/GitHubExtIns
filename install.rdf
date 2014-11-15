@@ -4,7 +4,7 @@
 		<em:id>{86054B0A-BD85-42F9-8E58-8794EC6F6EA1}</em:id>
 		<em:type>2</em:type>
 		<em:name>GitHub Extension Installer</em:name>
-		<em:version>1.5a3</em:version>
+		<em:version>1.5a4</em:version>
 		<em:creator>Diego Casorran &lt;dcasorran@gmail.com&gt;</em:creator>
 		<em:description>Install Browser Extensions straight from GitHub Repositories</em:description>
 		<em:contributor>Jerone</em:contributor>
