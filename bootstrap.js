@@ -362,7 +362,8 @@ function onPageLoad(doc) {
 				
 				btn.setAttribute('path', breads.join('/') + '/');
 				
-				var filename = doc.querySelector('input.filename').getAttribute('value'); //dont use .value here otherwise it gets renamed
+				var filenameEl = (doc.querySelector('input.filename') || doc.querySelector('.js-blob-filename'));
+				var filename = filenameEl.getAttribute('value'); //dont use .value here otherwise it gets renamed
 				breads.push(filename);
 				
 				btn.setAttribute('filepath', breads.join('/'));
