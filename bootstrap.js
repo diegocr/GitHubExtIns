@@ -77,7 +77,7 @@ function onClickHanlder(ev) {
 			"Don't click me more than once, reload the page to retry.");
 		return;
 	}
-	
+
 	if (this.classList.contains('disabled')) { //needed for when checking if editable file is installable
 		return;
 	}
@@ -113,19 +113,19 @@ function onClickHanlder(ev) {
 							.createInstance(Ci.nsIZipWriter);
 
 				let oFile = FileUtils.getFile("TmpD", [addon.tag+'.xpi']);
-				
+
 				zipReader.open(nFile);
 				zipWriter.open(oFile, 0x2c);
-				
+
 				let p = (this.getAttribute('path') || "*/"),
 					m = zipReader.findEntries(p + "*");
 				p = p.substr(2);
-				
+
 				if (this.hasAttribute('filepath')) {
 					var fileName = this.getAttribute('filepath');
 					var useUncommitedFilePath = this.getAttribute('filepath').replace(this.getAttribute('path'), ''); //relative to path, because thats what is getting written to xpi
 				}
-				
+
 				while(m.hasMore()) {
 					let f = m.getNext(),
 						e = zipReader.getEntry(f);
@@ -145,7 +145,7 @@ function onClickHanlder(ev) {
 							let is = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
 							is.data = this.ownerDocument.querySelector('#blob_contents').value;
 							zipWriter.addEntryStream(n, Date.now(), Ci.nsIZipWriter.COMPRESSION_FASTEST, is, !1);
-						} else {							
+						} else {
 							zipWriter.addEntryStream(n, e.lastModifiedTime,
 								Ci.nsIZipWriter.COMPRESSION_FASTEST,
 								zipReader.getInputStream(f), !1);
@@ -183,21 +183,21 @@ function onClickHanlder(ev) {
 								let m = aAddon.name + ' requires restart.\n\n'
 									+ 'Would you like to restart '
 									+ Services.appinfo.name + ' now?';
-		
+
 								m = Services.prompt.confirmEx(null,
 									addon.name,m,1027,0,0,0,null,{});
-		
+
 								if(!m) {
 									let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"]
 										.createInstance(Ci.nsISupportsPRBool);
-		
+
 									Services.obs.notifyObservers(cancelQuit,
 										"quit-application-requested", null);
-		
+
 									if(!cancelQuit.data) {
 										Services.obs.notifyObservers(null,
 											"quit-application-granted", null);
-		
+
 										Services.startup.quit(
 											Ci.nsIAppStartup.eAttemptQuit |
 											Ci.nsIAppStartup.eRestart
@@ -207,23 +207,23 @@ function onClickHanlder(ev) {
 							}
 						});
 					};
-		
+
 					aInstall.addListener({
 						onInstallFailed : function(aInstall) {
 							aInstall.removeListener(this);
-		
+
 							done(aInstall.error);
 						},
 						onInstallEnded : function(aInstall,aAddon) {
 							aInstall.removeListener(this);
-		
+
 							done(aAddon.name + ' ' + aAddon.version
 								+ ' has been installed successfully.',aAddon);
 						}
 					});
 					aInstall.install();
 				});
-		
+
 				nFile.remove(!1);
 
 			}
@@ -269,7 +269,7 @@ function addButton(n,u) {
 			n.firstChild.style.verticalAlign = 'baseline';
 		}
 	}
-	
+
 	return n;
 }
 
@@ -345,7 +345,7 @@ function onPageLoad(doc) {
 				var f = btn.firstChild;
 				l.textContent = ' Checking if Installable...';
 				f.className = f.className.replace('plus','hourglass');
-				
+
 				var breadcrumbs = doc.querySelectorAll('span[itemtype*=Breadcrumb]');
 				var breads = ['*'];
 				for (var i=1; i<breadcrumbs.length-1; i++) { //start at i=1 because not possible to have */install.rdf or any files */ because zips off of github first hold a folder
@@ -358,15 +358,15 @@ function onPageLoad(doc) {
 					lookFor.push(thisLookFor);
 				}
 				lookFor.reverse();
-				
+
 				btn.setAttribute('path', breads.join('/') + '/');
-				
+
 				var filenameEl = (doc.querySelector('input.filename') || doc.querySelector('.js-blob-filename'));
 				var filename = filenameEl.getAttribute('value'); //dont use .value here otherwise it gets renamed
 				breads.push(filename);
-				
+
 				btn.setAttribute('filepath', breads.join('/'));
-				
+
 				////////////////////////////////
 				xhr(btn.href || btn.getAttribute('href'),data => {
 					let iStream = Cc["@mozilla.org/io/arraybuffer-input-stream;1"]
@@ -385,10 +385,10 @@ function onPageLoad(doc) {
 							let zipReader = Cc["@mozilla.org/libjar/zip-reader;1"]
 									.createInstance(Ci.nsIZipReader);
 
-							let oFile = FileUtils.getFile("TmpD", [addon.tag+'.xpi']);							
-							
+							let oFile = FileUtils.getFile("TmpD", [addon.tag+'.xpi']);
+
 							zipReader.open(nFile);
-							
+
 							var entries = zipReader.findEntries(null);
 							while(entries.hasMore()) {
 								let entryFileName = entries.getNext();
@@ -419,8 +419,8 @@ function onPageLoad(doc) {
 					});
 				});
 				//////////////////
-				
-				
+
+
 			}
 		}
 	}
