@@ -276,7 +276,7 @@ function addButton(n,u) {
 function onPageLoad(doc) {
 
 	var myElseIfVar;
-	if(doc.location.pathname.replace(/\/[^/]+$/,'').substr(-4) === 'pull') {
+	if(doc.location.pathname.split('/')[3] === 'pull') {
 		// Based on work by Jerone: https://github.com/jerone/UserScripts
 
 		let r = '' + doc.location.pathname.split('/').filter(String).slice(1,2),
