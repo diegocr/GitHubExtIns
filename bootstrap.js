@@ -8,7 +8,7 @@
  *   Diego Casorran <dcasorran@gmail.com> (Original Author)
  *	 Jerone
  *	 Zulkarnain K.
- *	 Noitidart <noitidart@gmail.com> (Authored Contirubtion: "Install from Edit Page without Committing")
+ *	 Noitidart <noitidart@gmail.com> (Authored Contribution: "Install from Edit Page without Committing")
  *
  * ***** END LICENSE BLOCK ***** */
 
