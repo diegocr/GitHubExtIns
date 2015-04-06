@@ -298,7 +298,6 @@ function onPageLoad(doc) {
 	}
 	else if([].some.call(doc.querySelectorAll('table.files > tbody > tr > td.content'),
 		(n) => 'install.rdf' === n.textContent.trim())) {
-console.error('here');
 		let c = 7, n, z;
 		n = doc.querySelector('a.sidebar-button[href*=".zip"]');
 		while(c-- && !(n=doc.querySelector('a.minibutton:nth-child('+c+'),a.btn.btn-sm:nth-child('+c+')')));
@@ -307,7 +306,6 @@ console.error('here');
 			c = doc.querySelector('div.only-with-full-nav');
 
 			if(!c || doc.defaultView.getComputedStyle(c).getPropertyValue('display') == 'block') {
-				console.error('with just n, n is:', n);
 				addButton(n);
 			} else {
 				z = n;
@@ -320,7 +318,6 @@ console.error('here');
 			n = n && n.firstElementChild;
 
 			if( n ) {
-				console.error('n and z, n:', n, 'z:', z);
 				addButton(n,z);
 			}
 		}
