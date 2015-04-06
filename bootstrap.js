@@ -265,7 +265,7 @@ function addButton(n,u) {
 		if(typeof u !== 'object') {
 			n.className += ' button primary pseudo-class-active';
 		} else {
-			n.className = 'minibutton pseudo-class-active';
+			n.className = 'btn btn-sm minibutton pseudo-class-active';
 			n.firstChild.style.verticalAlign = 'baseline';
 		}
 	}
@@ -301,10 +301,7 @@ function onPageLoad(doc) {
 console.error('here');
 		let c = 7, n, z;
 		n = doc.querySelector('a.sidebar-button[href*=".zip"]');
-		console.error('with just n, n is:', n);
-		addButton(n);
-		/*
-		while(c-- && !(n=doc.querySelector('a.minibutton:nth-child('+c+')')));
+		while(c-- && !(n=doc.querySelector('a.minibutton:nth-child('+c+'),a.btn.btn-sm:nth-child('+c+')')));
 
 		if(n && n.textContent.trim() === 'Download ZIP') {
 			c = doc.querySelector('div.only-with-full-nav');
@@ -317,7 +314,6 @@ console.error('here');
 				n = 0;
 			}
 		}
-		*/
 
 		if(!n) {
 			n = doc.querySelector('div.file-navigation');
@@ -333,7 +329,7 @@ console.error('here');
 		var editForm = myElseIfVar;
 		var filePath = editForm.getAttribute('action');
 		let c = 7, n, z;
-		while(c-- && !(n=doc.querySelector('a.minibutton:nth-child('+c+')')));
+		while(c-- && !(n=doc.querySelector('a.minibutton:nth-child('+c+'),a.btn.btn-sm:nth-child('+c+')')));
 
 		if(n && n.textContent.trim() === 'Download ZIP') {
 			c = doc.querySelector('div.only-with-full-nav');
