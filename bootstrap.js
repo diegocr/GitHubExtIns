@@ -6,7 +6,7 @@
  *
  * Contributor(s):
  *   Diego Casorran <dcasorran@gmail.com> (Original Author)
- *	 Jerone
+ *	 Jerone <jeronevw@hotmail.com>
  *	 Zulkarnain K.
  *	 Noitidart <noitidart@gmail.com> (Authored Contribution: "Install from Edit Page without Committing")
  *
