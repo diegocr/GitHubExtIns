@@ -92,7 +92,7 @@ function onClickHanlder(ev) {
 
 		iStream.setData(data,0,data.byteLength);
 
-		let nFile = FileUtils.getFile("TmpD", [Math.random()])
+		let nFile = FileUtils.getFile("TmpD", [Math.random()]),
 			oStream = FileUtils.openSafeFileOutputStream(nFile);
 
 		NetUtil.asyncCopy(iStream, oStream, aStatus => {
