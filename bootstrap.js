@@ -304,7 +304,7 @@ function loadIntoWindow(window) {
 		for(let m of ms) {
 			if('class' == m.attributeName) {
 				if(~m.oldValue.indexOf('loading')
-				|| m.oldValue === 'context-loader') {
+				|| ~m.oldValue.indexOf('context-loader')) {
 					window.setTimeout(onPageLoad.bind(null,doc),820);
 				}
 				break;
