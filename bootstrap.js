@@ -6,6 +6,7 @@
  *
  * Contributor(s):
  *   Diego Casorran <dcasorran@gmail.com> (Original Author)
+ *   Jeroen van Warmerdam <jeronevw@hotmail.com>
  *
  * ***** END LICENSE BLOCK ***** */
 
@@ -238,14 +239,14 @@ function addButton(n,u) {
 		if(typeof u !== 'object') {
 			n.className += ' button primary pseudo-class-active';
 		} else {
-			n.className = 'minibutton pseudo-class-active';
+			n.className = 'btn btn-sm minibutton pseudo-class-active';
 			n.firstChild.style.verticalAlign = 'baseline';
 		}
 	}
 }
 
 function onPageLoad(doc) {
-	if(doc.location.pathname.replace(/\/[^/]+$/,'').substr(-4) === 'pull') {
+	if(doc.location.pathname.split('/')[3] === 'pull') {
 		// Based on work by Jerone: https://github.com/jerone/UserScripts
 
 		let r = '' + doc.location.pathname.split('/').filter(String).slice(1,2),
@@ -269,7 +270,7 @@ function onPageLoad(doc) {
 		(n) => 'install.rdf' === n.textContent.trim())) {
 
 		let c = 7, n, z;
-		while(c-- && !(n=doc.querySelector('a.minibutton:nth-child('+c+')')));
+		while(c-- && !(n=doc.querySelector('a.minibutton:nth-child('+c+'),a.btn.btn-sm:nth-child('+c+')')));
 
 		if(n && n.textContent.trim() === 'Download ZIP') {
 			c = doc.querySelector('div.only-with-full-nav');
