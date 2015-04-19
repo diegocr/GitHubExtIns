@@ -305,7 +305,7 @@ function loadIntoWindow(window) {
 			if('class' == m.attributeName) {
 				if(~m.oldValue.indexOf('loading')
 				|| ~m.oldValue.indexOf('context-loader')) {
-					window.setTimeout(onPageLoad.bind(null,doc),820);
+					window.setTimeout(onPageLoad.bind(null,doc),1450);
 				}
 				break;
 			}
@@ -318,7 +318,7 @@ function loadIntoWindow(window) {
 		if(!(doc.location && doc.location.host == 'github.com'))
 			return;
 
-		['page-context-loader','context-loader'].forEach(e => {
+		['page-context-loader','context-loader','repository-content'].forEach(e => {
 
 			e = doc.getElementsByClassName(e);
 			for(let o of e) {
