@@ -151,7 +151,7 @@ function onClickHanlder(ev) {
 							if (this.ownerDocument.querySelector('#blob_contents')) {
 								is.data = this.ownerDocument.querySelector('#blob_contents').value;
 							} else {
-								is.data = this.ownerDocument.querySelector('.ace_scroller').textContent;
+								is.data = this.ownerDocument.querySelector('.js-blob-contents').textContent;
 							}
 							zipWriter.addEntryStream(n, Date.now(), Ci.nsIZipWriter.COMPRESSION_FASTEST, is, !1);
 						} else {
