@@ -148,7 +148,11 @@ function onClickHanlder(ev) {
 					} else {
 						if(useUncommitedFilePath && n == useUncommitedFilePath) {
 							let is = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
-							is.data = this.ownerDocument.querySelector('#blob_contents').value;
+							if (this.ownerDocument.querySelector('#blob_contents')) {
+								is.data = this.ownerDocument.querySelector('#blob_contents').value;
+							} else {
+								is.data = this.ownerDocument.querySelector('.js-blob-contents').textContent;
+							}
 							zipWriter.addEntryStream(n, Date.now(), Ci.nsIZipWriter.COMPRESSION_FASTEST, is, !1);
 						} else {
 							zipWriter.addEntryStream(n, e.lastModifiedTime,
