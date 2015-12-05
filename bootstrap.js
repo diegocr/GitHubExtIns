@@ -243,9 +243,12 @@ function addButton(n,u) {
 			n.firstChild.style.verticalAlign = 'baseline';
 		}
 	}
+	return n;
 }
 
 function onPageLoad(doc) {
+	let isMobileSite = (doc.body.firstElementChild.nodeName === 'HEADER');
+
 	if(doc.location.pathname.split('/')[3] === 'pull') {
 		// Based on work by Jerone: https://github.com/jerone/UserScripts
 
@@ -265,6 +268,19 @@ function onPageLoad(doc) {
 
 			addButton(n,u);
 		}
+	}
+	else if (isMobileSite) {
+		if([].some.call(doc.querySelectorAll('a.list-item > :nth-child(2)'),
+			(n) => 'install.rdf' === String(Object(n.previousSibling).nodeValue).trim())) {
+				let c = 11, n, b;
+				while(c-- && !(n=doc.querySelector('.nav-bar-tabs > ul:nth-child(1) > li:nth-child('+c+') > a:nth-child(1)')));
+
+				if(n && n.textContent.trim() === 'Pulse') {
+					n = addButton(n);
+					b = String(Object(doc.querySelector('.branch-selector-toggle')).textContent).trim();
+					n.href = String(n.href).replace('/pulse', '/archive/' + b + '.zip');
+				}
+			}
 	}
 	else if([].some.call(doc.querySelectorAll('table.files > tbody > tr > td.content'),
 		(n) => 'install.rdf' === n.textContent.trim())) {
