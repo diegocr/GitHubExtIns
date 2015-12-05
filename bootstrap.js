@@ -277,6 +277,8 @@ function onPageLoad(doc) {
 
 			if(!c || doc.defaultView.getComputedStyle(c).getPropertyValue('display') == 'block') {
 				addButton(n);
+				c = doc.querySelector('div.file-navigation-options div.input-group');
+				if (c) c.style.maxWidth = '260px';
 			} else {
 				z = n;
 				n = 0;
