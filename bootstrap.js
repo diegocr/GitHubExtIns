@@ -323,7 +323,9 @@ function loadIntoWindow(window) {
 			if('class' == m.attributeName) {
 				if(~m.oldValue.indexOf('loading')
 				|| ~m.oldValue.indexOf('context-loader')) {
-					window.setTimeout(onPageLoad.bind(null,doc),1450);
+					obs.map(ob => ob.disconnect());
+					obs = [];
+					window.setTimeout(pageload.bind(null,doc),950);
 				}
 				break;
 			}
@@ -336,12 +338,17 @@ function loadIntoWindow(window) {
 		if(!(doc.location && doc.location.host == 'github.com'))
 			return;
 
+		pageload(doc);
+	};
+	let obs = [];
+	let pageload = doc => {
 		['page-context-loader','context-loader','repository-content'].forEach(e => {
 
 			e = doc.getElementsByClassName(e);
 			for(let o of e) {
-				new doc.defaultView.MutationObserver(m => onMutation(m,doc))
-					.observe(o,{attributes:!0,attributeOldValue:!0});
+				let ob = new doc.defaultView.MutationObserver(m => onMutation(m,doc));
+				ob.observe(o,{attributes:!0,attributeOldValue:!0});
+				obs.push(ob);
 			}
 		});
 
