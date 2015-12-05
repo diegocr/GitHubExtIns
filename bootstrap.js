@@ -270,7 +270,7 @@ function onPageLoad(doc) {
 		(n) => 'install.rdf' === n.textContent.trim())) {
 
 		let c = 7, n, z;
-		while(c-- && !(n=doc.querySelector('a.minibutton:nth-child('+c+'),a.btn.btn-sm:nth-child('+c+')')));
+		while(c-- && !(n=doc.querySelector('div.file-navigation-option:nth-child('+c+') > a:nth-child(1)')));
 
 		if(n && n.textContent.trim() === 'Download ZIP') {
 			c = doc.querySelector('div.only-with-full-nav');
